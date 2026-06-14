@@ -1,0 +1,123 @@
+'use client';
+
+import { useChat } from 'ai/react';
+import { Send, Bot, User, Loader2, Wrench } from 'lucide-react';
+
+export default function ChatAgentPage() {
+  // useChat automatically calls /api/chat and manages local conversation arrays
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat();
+
+  return (
+    <div className="flex flex-col h-screen bg-gray-50 text-gray-900 font-sans">
+      
+      {/* Top Application Header */}
+      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm">
+        <div className="flex items-center space-x-3">
+          <div className="bg-black text-white p-2 rounded-lg">
+            <Bot size={20} />
+          </div>
+          <div>
+            <h1 className="text-md font-semibold tracking-tight">Vercel AI SDK Agent</h1>
+            <p className="text-xs text-gray-400">Next.js App Router &bull; GPT-4o-Mini</p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span className="text-xs font-medium text-gray-500">Agent Active</span>
+        </div>
+      </header>
+
+      {/* Main Chat Stream View */}
+      <main className="flex-1 overflow-y-auto p-6 space-y-6 max-w-3xl w-full mx-auto">
+        {messages.length === 0 && (
+          <div className="text-center mt-20 space-y-3">
+            <p className="text-gray-400 text-sm">Ask the agent a question to spark execution.</p>
+            <div className="flex justify-center gap-2">
+              <button 
+                onClick={() => handleInputChange({ target: { value: 'How much is BTC and AAPL right now?' } } as any)}
+                className="text-xs bg-white border border-gray-200 hover:border-gray-400 px-3 py-1.5 rounded-full shadow-sm text-gray-600 transition"
+              >
+                "Check BTC and AAPL values"
+              </button>
+            </div>
+          </div>
+        )}
+
+        {messages.map((message) => (
+          <div key={message.id} className={`flex space-x-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            
+            {/* Avatar Node */}
+            {message.role !== 'user' && (
+              <div className="bg-gray-900 text-white p-2 rounded-xl h-9 w-9 flex items-center justify-center shadow-sm">
+                <Bot size={16} />
+              </div>
+            )}
+
+            {/* Bubble Layout Container */}
+            <div className={`max-w-[80%] flex flex-col space-y-2`}>
+              {message.content && (
+                <div className={`p-4 rounded-2xl text-sm leading-relaxed ${
+                  message.role === 'user'
+                    ? 'bg-black text-white rounded-tr-none shadow-md'
+                    : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none shadow-sm'
+                }`}>
+                  {message.content}
+                </div>
+              )}
+
+              {/* Display Tool Executions if Present */}
+              {message.toolInvocations && message.toolInvocations.map((toolInvocation) => {
+                const { toolName, toolCallId, state } = toolInvocation;
+                return (
+                  <div key={toolCallId} className="flex items-center space-x-2 text-xs bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-gray-600 font-mono">
+                    <Wrench size={12} className="text-gray-400 animate-spin" />
+                    <span>
+                      {toolName}(): {state === 'result' ? 'Completed' : 'Calling tool...'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {message.role === 'user' && (
+              <div className="bg-blue-600 text-white p-2 rounded-xl h-9 w-9 flex items-center justify-center shadow-sm">
+                <User size={16} />
+              </div>
+            )}
+
+          </div>
+        ))}
+
+        {isLoading && messages[messages.length - 1]?.role === 'user' && (
+          <div className="flex items-center space-x-2 text-xs text-gray-400 italic">
+            <Loader2 size={12} className="animate-spin" />
+            <span>Agent is determining execution constraints...</span>
+          </div>
+        )}
+      </main>
+
+      {/* Input Form Footer */}
+      <footer className="bg-white border-t border-gray-200 p-4 shadow-lg">
+        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex items-center space-x-3">
+          <input
+            value={input}
+            onChange={handleInputChange}
+            placeholder="Talk with the agent or query prices..."
+            className="flex-1 bg-gray-50 border border-gray-200 focus:bg-white text-sm p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-black transition"
+          />
+          <button
+            type="submit"
+            disabled={!input.trim()}
+            className="bg-black text-white hover:bg-gray-800 p-3 rounded-xl shadow-sm disabled:opacity-40 transition"
+          >
+            <Send size={16} />
+          </button>
+        </form>
+      </footer>
+
+    </div>
+  );
+}
